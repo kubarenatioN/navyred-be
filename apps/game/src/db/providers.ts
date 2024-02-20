@@ -4,7 +4,7 @@ export const mainCon: TypeOrmModuleOptions = {
   type: 'postgres',
   host: 'localhost',
   port: 5432,
-  database: 'test-db',
+  database: 'navyred',
   username: 'postgres',
   password: 'root',
   synchronize: true,

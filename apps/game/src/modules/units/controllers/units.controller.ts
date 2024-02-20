@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseArrayPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CreateUnitDTO } from 'apps/game/src/dto';
 import { UnitsService } from '../services/units.service';
 
@@ -15,5 +22,19 @@ export class UnitsController {
   async create(@Body() body: CreateUnitDTO) {
     const created = await this.unitsService.create(body);
     return created;
+  }
+
+  @Get('raids')
+  getUnitsRaids(
+    @Query(
+      'unit_ids',
+      new ParseArrayPipe({
+        items: Number,
+        optional: true,
+      }),
+    )
+    unitsIds?: number[],
+  ) {
+    return this.unitsService.getUnitsRaids(unitsIds);
   }
 }

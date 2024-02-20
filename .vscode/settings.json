@@ -3,4 +3,5 @@
     "source.organizeImports": "explicit",
     "source.fixAll": "explicit"
   },
+  "files.trimTrailingWhitespace": true,
 }
