@@ -2,11 +2,9 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseIntPipe,
-  Post,
+  Post
 } from '@nestjs/common';
 import { CreateRaidDTO } from 'apps/game/src/dto';
 import { RaidService } from '../services/raid.service';
@@ -14,6 +12,11 @@ import { RaidService } from '../services/raid.service';
 @Controller('raids')
 export class RaidController {
   constructor(private raidService: RaidService) {}
+
+  @Get(':id')
+  getOne(@Param('id', ParseIntPipe) id: number) {
+    return this.raidService.get(id);
+  }
 
   @Post()
   create(@Body() body: CreateRaidDTO) {
@@ -25,7 +28,6 @@ export class RaidController {
   }
 
   @Post(':id/complete')
-  @HttpCode(HttpStatus.NO_CONTENT)
   completeRaid(@Param('id', ParseIntPipe) id: number) {
     return this.raidService.complete(id);
   }

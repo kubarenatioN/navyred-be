@@ -18,6 +18,16 @@ export class RaidService {
     @InjectRepository(UserAccount) private userAccRepo: Repository<UserAccount>,
   ) {}
 
+  async get(id: number) {
+    const raid = await this.raidRepo.findOneBy({ id });
+
+    /**
+     * One one element in array
+     */
+    const [result] = await this.fixRaidsStatus([raid]);
+    return result;
+  }
+
   async create(data: CreateRaid) {
     const { unitId } = data;
     const startAt = new Date();
@@ -44,6 +54,8 @@ export class RaidService {
       goldLoot: Math.random() * 100,
     });
 
+    delete inserted.goldLoot;
+
     return inserted;
   }
 
@@ -53,7 +65,11 @@ export class RaidService {
    * @param id raid ID
    */
   async complete(id: number) {
-    const raid = await this.raidRepo.findOneBy({ id });
+    const raid = await this.raidRepo
+      .createQueryBuilder('raid')
+      .where('raid.id = :id', { id })
+      .addSelect('raid.goldLoot')
+      .getOne();
 
     if (!raid) {
       throw new HttpException('Raid not found.', HttpStatus.NOT_FOUND);
@@ -62,7 +78,7 @@ export class RaidService {
     /**
      * If status is already "completed", throw
      */
-    if (raid.status !== RaidStatusEnum.Returned) {
+    if (raid.status === RaidStatusEnum.Completed) {
       throw new HttpException(
         'Raid have been already completed.',
         HttpStatus.BAD_REQUEST,
@@ -104,6 +120,28 @@ export class RaidService {
     raid.status = RaidStatusEnum.Completed;
     await this.raidRepo.save(raid);
 
-    return {};
+    return userAccount;
+  }
+
+  async fixRaidsStatus(raids: Raid[]): Promise<Raid[]> {
+    const currentTime = new Date().getTime();
+
+    const raidsToSave = [];
+    for (const raid of raids) {
+      const { endAt, status } = raid;
+      if (
+        status === RaidStatusEnum.InProgress &&
+        currentTime >= endAt.getTime()
+      ) {
+        raid.status = RaidStatusEnum.Returned;
+        raidsToSave.push(raid);
+      }
+    }
+
+    if (raidsToSave.length > 0) {
+      await this.raidRepo.save(raidsToSave);
+    }
+
+    return raids;
   }
 }

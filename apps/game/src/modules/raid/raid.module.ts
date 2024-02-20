@@ -8,5 +8,6 @@ import { RaidService } from './services/raid.service';
   imports: [TypeOrmModule.forFeature([Raid, Unit, UserAccount])],
   providers: [RaidService],
   controllers: [RaidController],
+  exports: [RaidService],
 })
 export class RaidModule {}

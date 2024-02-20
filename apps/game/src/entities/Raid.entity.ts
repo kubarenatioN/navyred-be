@@ -43,6 +43,7 @@ export class Raid {
     type: 'decimal',
     default: 0,
     transformer: new ColumnNumericTransformer(),
+    select: false,
   })
   goldLoot: number;
 
