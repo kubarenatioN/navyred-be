@@ -4,7 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Post
+  Post,
 } from '@nestjs/common';
 import { CreateRaidDTO } from 'apps/game/src/dto';
 import { RaidService } from '../services/raid.service';

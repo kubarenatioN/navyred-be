@@ -6,7 +6,8 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { mainCon } from './db/providers';
-import { Raid, Unit, User, UserAccount } from './entities';
+import { Raid, Unit, User, UserAccount, UserSession } from './entities';
+import { AuthModule } from './modules/auth/auth.module';
 import { RaidModule } from './modules/raid/raid.module';
 import { UnitsModule } from './modules/units/units.module';
 
@@ -16,9 +17,10 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
   imports: [
     UnitsModule,
     RaidModule,
+    AuthModule,
     TypeOrmModule.forRoot({
       ...mainCon,
-      entities: [Unit, Raid, User, UserAccount],
+      entities: [Unit, Raid, User, UserAccount, UserSession],
     }),
     ServeStaticModule.forRoot({
       rootPath: gameStaticAssetsPath,
