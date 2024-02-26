@@ -21,6 +21,10 @@ export class RaidService {
   async get(id: number) {
     const raid = await this.raidRepo.findOneBy({ id });
 
+    if (!raid) {
+      throw new HttpException('No raid found.', HttpStatus.NOT_FOUND);
+    }
+
     /**
      * One one element in array
      */
@@ -98,7 +102,7 @@ export class RaidService {
     /**
      * Hard code. Remove it later. Retrieve user ID from request headers
      */
-    const userId = 1;
+    const userId = 5;
     const userAccount = await this.userAccRepo.findOneBy({
       user: {
         id: userId,

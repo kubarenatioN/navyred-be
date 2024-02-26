@@ -9,7 +9,10 @@ import {
 import { CreateRaidDTO } from 'apps/game/src/dto';
 import { RaidService } from '../services/raid.service';
 
-@Controller('raids')
+@Controller({
+  path: 'raids',
+  version: '1',
+})
 export class RaidController {
   constructor(private raidService: RaidService) {}
 

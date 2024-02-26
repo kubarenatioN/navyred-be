@@ -9,7 +9,10 @@ import {
 import { CreateUnitDTO } from 'apps/game/src/dto';
 import { UnitsService } from '../services/units.service';
 
-@Controller('units')
+@Controller({
+  path: 'units',
+  version: '1',
+})
 export class UnitsController {
   constructor(private unitsService: UnitsService) {}
 

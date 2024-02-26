@@ -1,9 +1,15 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('user_session')
 export class UserSession {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Index({
+    unique: true,
+  })
+  @Column()
+  uid: string;
 
   @Column({
     name: 'user_id',
@@ -11,8 +17,8 @@ export class UserSession {
   userId: number;
 
   @Column({
-    name: 'expires_at',
+    name: 'expired_at',
     type: 'timestamp',
   })
-  expiresAt: Date;
+  expiredAt: Date;
 }
