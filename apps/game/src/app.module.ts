@@ -10,6 +10,7 @@ import { mainCon } from './db/providers';
 import { Raid, Unit, User, UserAccount, UserSession } from './entities';
 import { AuthModule } from './modules/auth/auth.module';
 import { RaidModule } from './modules/raid/raid.module';
+import { SharedModule } from './modules/shared/shared.module';
 import { UnitsModule } from './modules/units/units.module';
 
 const gameStaticAssetsPath = join(__dirname, '../../assets');
@@ -34,6 +35,7 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
       envFilePath: ['.env.game'],
     }),
     ScheduleModule.forRoot(),
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

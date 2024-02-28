@@ -1,8 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SESSION_KEY } from 'apps/game/src/constants';
 import { User, UserSession } from 'apps/game/src/entities';
 import { genUid } from 'apps/game/src/helpers/uid';
 import { add } from 'date-fns';
+import { Request } from 'express';
 import { Repository } from 'typeorm';
 import {
   UserLogin,
@@ -15,9 +17,15 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(UserSession) private sessionRepo: Repository<UserSession>,
+    @Inject(SESSION_KEY) private sessionToken: string,
   ) {}
 
-  async getSession(uid: string) {
+  /**
+   * Returns user object by provided session ID
+   *
+   * @param uid session uid
+   */
+  async getSession(uid: string): Promise<User> {
     if (!uid) {
       throw new HttpException('No session id provided', HttpStatus.BAD_REQUEST);
     }
@@ -106,5 +114,30 @@ export class AuthService {
       user: newUser,
       session: newSession.uid,
     };
+  }
+
+  // TODO: Move this method to UserService
+  /**
+   * Query user from database
+   *
+   * @param login user login
+   * @param password user password
+   */
+  getUser(login: string, password: string): Promise<User | null> {
+    return this.userRepo.findOneBy({
+      login,
+      password,
+    });
+  }
+
+  /**
+   * Gets user by request object.
+   * Expected to have session id attached in request
+   *
+   * @param req request object
+   */
+  async getUserFromRequest(req: Request): Promise<User> {
+    const session = req.cookies[this.sessionToken];
+    return this.getSession(session);
   }
 }

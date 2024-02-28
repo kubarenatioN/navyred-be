@@ -5,10 +5,13 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateRaidDTO } from 'apps/game/src/dto';
+import { ProtectedGuard } from 'apps/game/src/guards';
 import { RaidService } from '../services/raid.service';
 
+@UseGuards(ProtectedGuard)
 @Controller({
   path: 'raids',
   version: '1',
