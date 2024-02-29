@@ -4,12 +4,18 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Post
+  Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateRaidDTO } from 'apps/game/src/dto';
+import { ProtectedGuard } from 'apps/game/src/guards';
 import { RaidService } from '../services/raid.service';
 
-@Controller('raids')
+@UseGuards(ProtectedGuard)
+@Controller({
+  path: 'raids',
+  version: '1',
+})
 export class RaidController {
   constructor(private raidService: RaidService) {}
 

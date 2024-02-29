@@ -21,7 +21,9 @@ export class UserAccount {
   })
   goldBalance: number;
 
-  @OneToOne(() => User)
+  @OneToOne(() => User, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   user: User;
 }

@@ -1,13 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { mainCon } from './db/providers';
-import { Raid, Unit, User, UserAccount } from './entities';
+import {
+  Raid,
+  Unit,
+  UnitModel,
+  User,
+  UserAccount,
+  UserSession,
+} from './entities';
+import { AuthModule } from './modules/auth/auth.module';
 import { RaidModule } from './modules/raid/raid.module';
+import { SharedModule } from './modules/shared/shared.module';
 import { UnitsModule } from './modules/units/units.module';
 
 const gameStaticAssetsPath = join(__dirname, '../../assets');
@@ -16,9 +26,10 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
   imports: [
     UnitsModule,
     RaidModule,
+    AuthModule,
     TypeOrmModule.forRoot({
       ...mainCon,
-      entities: [Unit, Raid, User, UserAccount],
+      entities: [UnitModel, Raid, User, UserAccount, UserSession, Unit],
     }),
     ServeStaticModule.forRoot({
       rootPath: gameStaticAssetsPath,
@@ -30,6 +41,8 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
     ConfigModule.forRoot({
       envFilePath: ['.env.game'],
     }),
+    ScheduleModule.forRoot(),
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

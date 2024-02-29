@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Raid, RaidStatusEnum, Unit } from 'apps/game/src/entities';
+import {
+  Raid,
+  RaidStatusEnum,
+  Unit,
+  UnitModel,
+  User,
+} from 'apps/game/src/entities';
 import { In, Repository } from 'typeorm';
 import { RaidService } from '../../raid/services';
 import { CreateUnit } from '../models/units.model';
@@ -10,8 +16,10 @@ export class UnitsService {
   private readonly isUpdateStatusOnGet: boolean;
 
   constructor(
+    @InjectRepository(UnitModel) private unitModelsRepo: Repository<UnitModel>,
     @InjectRepository(Unit) private unitsRepo: Repository<Unit>,
     @InjectRepository(Raid) private raidRepo: Repository<Raid>,
+    @InjectRepository(User) private usersRepo: Repository<User>,
     private raidsService: RaidService,
   ) {
     const { RAID_STATUS_CHECK_STRATEGY } = process.env;
@@ -22,68 +30,74 @@ export class UnitsService {
   /**
    * Gets user units with raids
    */
-  async getAll() {
-    // TODO: add here limit or get only user units
-    const units = await this.unitsRepo.find({
-      relations: { raids: true },
+  async getAll(ownerId: number) {
+    const userUnits = await this.unitsRepo.find({
+      relations: {
+        owner: true,
+        raids: true,
+        model: true,
+      },
+      where: {
+        owner: {
+          id: ownerId,
+        },
+      },
     });
 
-    const userRaids = units.reduce(
-      (raids, unit) => {
-        raids.push(...unit.raids);
-        return raids;
-      },
-      <Raid[]>[],
-    );
-    await this.raidsService.fixRaidsStatus(userRaids);
+    /**
+     * Fix raids status at the time of request execution
+     */
+    for (const unit of userUnits) {
+      await this.raidsService.fixRaidsStatus(unit.raids);
+    }
 
-    const queryBuilder = this.unitsRepo.createQueryBuilder('units');
+    const queryBuilder = this.unitsRepo.createQueryBuilder('unit');
 
-    queryBuilder.leftJoinAndMapOne(
-      'units.active_raid',
-      'units.raids',
-      'raid',
-      'raid.status = :in_progress OR raid.status = :returned',
-      {
-        in_progress: RaidStatusEnum.InProgress,
-        returned: RaidStatusEnum.Returned,
-      },
-    );
+    const qb = queryBuilder
+      .andWhere('unit.owner = :owner', { owner: ownerId })
+      .leftJoinAndMapOne(
+        'unit.active_raid',
+        'unit.raids',
+        'raid',
+        'raid.status = :in_progress OR raid.status = :returned',
+        {
+          in_progress: RaidStatusEnum.InProgress,
+          returned: RaidStatusEnum.Returned,
+        },
+      )
+      .leftJoinAndSelect('unit.model', 'model');
 
-    // queryBuilder
-    //   .leftJoinAndMapOne(
-    //     'units.raid_in_progress',
-    //     'units.raids',
-    //     'raid1',
-    //     'raid1.status = :status1',
-    //     { status1: RaidStatusEnum.InProgress },
-    //   )
-    //   .leftJoinAndMapOne(
-    //     'units.active_raid',
-    //     'units.raids',
-    //     'raid3',
-    //     'raid3.status = :in_progress OR raid3.status = :returned',
-    //     {
-    //       in_progress: RaidStatusEnum.InProgress,
-    //       returned: RaidStatusEnum.Returned,
-    //     },
-    //   )
-    //   .leftJoinAndMapOne(
-    //     'units.raid_returned',
-    //     'units.raids',
-    //     'raid2',
-    //     'raid2.status = :status2',
-    //     { status2: RaidStatusEnum.Returned },
-    //   );
-
-    const result = await queryBuilder.getMany();
+    const result = await qb.getMany();
 
     return result;
   }
 
+  async claim({ unitId, ownerId }: { unitId: number; ownerId: number }) {
+    const owner = await this.usersRepo.findOneBy({ id: ownerId });
+    const model = await this.unitModelsRepo.findOneBy({ id: unitId });
+
+    if (!owner) {
+      throw new HttpException('Owner not found.', HttpStatus.NOT_FOUND);
+    }
+
+    if (!model) {
+      throw new HttpException(
+        'UnitModel model not found.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const inserted = await this.unitsRepo.save({
+      owner,
+      model,
+    });
+
+    return inserted;
+  }
+
   async create(data: CreateUnit) {
     // TODO: make important checks (db lookup)
-    const saved = await this.unitsRepo.save(data);
+    const saved = await this.unitModelsRepo.save(data);
     return saved;
   }
 

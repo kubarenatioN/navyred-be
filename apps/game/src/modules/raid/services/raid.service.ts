@@ -21,6 +21,10 @@ export class RaidService {
   async get(id: number) {
     const raid = await this.raidRepo.findOneBy({ id });
 
+    if (!raid) {
+      throw new HttpException('No raid found.', HttpStatus.NOT_FOUND);
+    }
+
     /**
      * One one element in array
      */
@@ -46,6 +50,10 @@ export class RaidService {
     const unit = await this.unitRepo.findOneBy({
       id: unitId,
     });
+
+    if (!unit) {
+      throw new HttpException('UnitModel not found', HttpStatus.BAD_REQUEST);
+    }
 
     const inserted = await this.raidRepo.save({
       unit,
@@ -90,7 +98,7 @@ export class RaidService {
      */
     if (raid.status !== RaidStatusEnum.Returned) {
       throw new HttpException(
-        'Unit is not returned from the raid yet!',
+        'UnitModel is not returned from the raid yet!',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -98,7 +106,7 @@ export class RaidService {
     /**
      * Hard code. Remove it later. Retrieve user ID from request headers
      */
-    const userId = 1;
+    const userId = 5;
     const userAccount = await this.userAccRepo.findOneBy({
       user: {
         id: userId,
