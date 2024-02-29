@@ -51,6 +51,10 @@ export class RaidService {
       id: unitId,
     });
 
+    if (!unit) {
+      throw new HttpException('UnitModel not found', HttpStatus.BAD_REQUEST);
+    }
+
     const inserted = await this.raidRepo.save({
       unit,
       startAt,
@@ -94,7 +98,7 @@ export class RaidService {
      */
     if (raid.status !== RaidStatusEnum.Returned) {
       throw new HttpException(
-        'Unit is not returned from the raid yet!',
+        'UnitModel is not returned from the raid yet!',
         HttpStatus.BAD_REQUEST,
       );
     }

@@ -7,7 +7,14 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { mainCon } from './db/providers';
-import { Raid, Unit, User, UserAccount, UserSession } from './entities';
+import {
+  Raid,
+  Unit,
+  UnitModel,
+  User,
+  UserAccount,
+  UserSession,
+} from './entities';
 import { AuthModule } from './modules/auth/auth.module';
 import { RaidModule } from './modules/raid/raid.module';
 import { SharedModule } from './modules/shared/shared.module';
@@ -22,7 +29,7 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
     AuthModule,
     TypeOrmModule.forRoot({
       ...mainCon,
-      entities: [Unit, Raid, User, UserAccount, UserSession],
+      entities: [UnitModel, Raid, User, UserAccount, UserSession, Unit],
     }),
     ServeStaticModule.forRoot({
       rootPath: gameStaticAssetsPath,
