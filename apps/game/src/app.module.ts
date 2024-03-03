@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -27,9 +27,15 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
     UnitsModule,
     RaidModule,
     AuthModule,
-    TypeOrmModule.forRoot({
-      ...mainCon,
-      entities: [UnitModel, Raid, User, UserAccount, UserSession, Unit],
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => {
+        return {
+          ...mainCon(configService),
+          entities: [UnitModel, Raid, User, UserAccount, UserSession, Unit],
+        };
+      },
+      imports: [ConfigModule],
+      inject: [ConfigService],
     }),
     ServeStaticModule.forRoot({
       rootPath: gameStaticAssetsPath,
