@@ -26,7 +26,7 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/package*.json ./
 
 # Copy the .env files
-COPY --from=builder /usr/src/app/.env.* .
+COPY --from=builder /usr/src/app/.env* .
 
 # Install only production dependencies
 RUN npm ci --only=production
