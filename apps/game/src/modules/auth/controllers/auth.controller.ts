@@ -43,6 +43,7 @@ export class AuthController {
     res.cookie(this.sessionToken, session, {
       maxAge: minutesToMilliseconds(15),
       secure: true,
+      sameSite: 'none',
     });
 
     return user;
