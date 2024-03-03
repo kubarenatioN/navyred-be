@@ -25,9 +25,6 @@ WORKDIR /usr/src/app
 # Copy package.json and package-lock.json from the build stage
 COPY --from=builder /usr/src/app/package*.json ./
 
-# Copy the .env files
-COPY --from=builder /usr/src/app/.env* .
-
 # Install only production dependencies
 RUN npm ci --only=production
 
