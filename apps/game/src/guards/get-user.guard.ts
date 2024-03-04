@@ -26,7 +26,7 @@ export class GetUserGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const user = await this.authService.getSession(session);
+    const user = await this.authService.getUserBySession(session);
     req.user = user;
 
     return true;

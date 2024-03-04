@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SESSION_KEY } from '../../constants';
-import { User, UserSession } from '../../entities';
+import { User, UserAccount, UserSession } from '../../entities';
+import { UserService } from '../user/services';
+import { UserModule } from '../user/user.module';
 import { AuthController } from './controllers';
 import { AuthService } from './service';
 import { TaskService } from './service/task.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserSession])],
+  imports: [
+    TypeOrmModule.forFeature([User, UserSession, UserAccount]),
+    UserModule,
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,
+    UserService,
     TaskService,
     {
       provide: SESSION_KEY,

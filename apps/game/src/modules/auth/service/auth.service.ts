@@ -4,8 +4,9 @@ import { SESSION_KEY } from 'apps/game/src/constants';
 import { User, UserSession } from 'apps/game/src/entities';
 import { genUid } from 'apps/game/src/helpers/uid';
 import { add } from 'date-fns';
-import { Request } from 'express';
 import { Repository } from 'typeorm';
+import { UserRead } from '../../user/models';
+import { UserService } from '../../user/services';
 import {
   UserLogin,
   UserRegister,
@@ -18,6 +19,7 @@ export class AuthService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(UserSession) private sessionRepo: Repository<UserSession>,
     @Inject(SESSION_KEY) private sessionToken: string,
+    private userService: UserService,
   ) {}
 
   /**
@@ -25,25 +27,14 @@ export class AuthService {
    *
    * @param uid session uid
    */
-  async getSession(uid: string): Promise<User> {
+  async getUserBySession(uid: string): Promise<UserRead> {
     if (!uid) {
       throw new HttpException('No session id provided', HttpStatus.BAD_REQUEST);
     }
 
-    const session = await this.sessionRepo.findOneBy({ uid });
+    const session = await this.userService.getUserSession(uid);
 
-    if (!session) {
-      throw new HttpException('Session not found', HttpStatus.NOT_FOUND);
-    }
-
-    const user = await this.userRepo.findOneBy({ id: session.userId });
-
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    delete user.password;
-    return user;
+    return this.userService.getUser({ id: session.userId });
   }
 
   async login(data: UserLogin) {
@@ -52,7 +43,7 @@ export class AuthService {
      */
     const { login, password } = data;
 
-    const user = await this.userRepo.findOneBy({
+    const user = await this.userService.getUser({
       login,
       password,
     });
@@ -67,7 +58,6 @@ export class AuthService {
       expiredAt: add(new Date(), { minutes: 15 }),
     });
 
-    delete user.password;
     return {
       user,
       session: session.uid,
@@ -84,22 +74,19 @@ export class AuthService {
       return payload;
     })(password);
 
-    const existingUser = await this.userRepo
-      .createQueryBuilder('user')
-      .where('user.login = :login', {
-        login,
-      })
-      .andWhere('user.password = :password', { password })
-      .getOne();
+    const existingUser = await this.userService.getUser({
+      login,
+      password,
+    });
 
     if (existingUser) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
 
-    const newUser = await this.userRepo.save({ login, password });
+    const user = await this.userService.create({ login, password });
 
     const session: UserSessionModel = {
-      userId: newUser.id,
+      userId: user.id,
       uid: genUid(),
       expiredAt: add(Date.now(), {
         minutes: 15,
@@ -108,10 +95,8 @@ export class AuthService {
 
     const newSession = await this.sessionRepo.save(session);
 
-    delete newUser.password;
-
     return {
-      user: newUser,
+      user,
       session: newSession.uid,
     };
   }
@@ -123,21 +108,10 @@ export class AuthService {
    * @param login user login
    * @param password user password
    */
-  getUser(login: string, password: string): Promise<User | null> {
-    return this.userRepo.findOneBy({
+  getUser(login: string, password: string): Promise<UserRead | null> {
+    return this.userService.getUserSilently({
       login,
       password,
     });
-  }
-
-  /**
-   * Gets user by request object.
-   * Expected to have session id attached in request
-   *
-   * @param req request object
-   */
-  async getUserFromRequest(req: Request): Promise<User> {
-    const session = req.cookies[this.sessionToken];
-    return this.getSession(session);
   }
 }
