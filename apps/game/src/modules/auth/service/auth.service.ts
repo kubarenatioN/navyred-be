@@ -1,10 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SESSION_KEY } from 'apps/game/src/constants';
 import { User, UserSession } from 'apps/game/src/entities';
 import { genUid } from 'apps/game/src/helpers/uid';
 import { add } from 'date-fns';
 import { Repository } from 'typeorm';
+import { UnitsService } from '../../units/services';
 import { UserRead } from '../../user/models';
 import { UserService } from '../../user/services';
 import {
@@ -18,7 +18,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(UserSession) private sessionRepo: Repository<UserSession>,
-    @Inject(SESSION_KEY) private sessionToken: string,
+    private unitsService: UnitsService,
     private userService: UserService,
   ) {}
 
@@ -74,9 +74,11 @@ export class AuthService {
       return payload;
     })(password);
 
-    const existingUser = await this.userService.getUser({
-      login,
-      password,
+    const existingUser = await this.userRepo.findOne({
+      where: {
+        login,
+        password,
+      },
     });
 
     if (existingUser) {
@@ -84,6 +86,12 @@ export class AuthService {
     }
 
     const user = await this.userService.create({ login, password });
+
+    /**
+     * TEMP: Add one unit for user by default
+     * In future implement "random unit drop" feature for new users
+     */
+    await this.unitsService.claim({ unitId: 1, ownerId: user.id });
 
     const session: UserSessionModel = {
       userId: user.id,

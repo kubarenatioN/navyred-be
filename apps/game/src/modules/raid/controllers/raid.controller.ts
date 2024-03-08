@@ -5,10 +5,12 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { CreateRaidDTO } from 'apps/game/src/dto';
-import { ProtectedGuard } from 'apps/game/src/guards';
+import { GetUserGuard, ProtectedGuard } from 'apps/game/src/guards';
+import { Request } from 'express';
 import { RaidService } from '../services/raid.service';
 
 @UseGuards(ProtectedGuard)
@@ -34,7 +36,8 @@ export class RaidController {
   }
 
   @Post(':id/complete')
-  completeRaid(@Param('id', ParseIntPipe) id: number) {
-    return this.raidService.complete(id);
+  @UseGuards(GetUserGuard)
+  completeRaid(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    return this.raidService.complete(id, req.user.id);
   }
 }

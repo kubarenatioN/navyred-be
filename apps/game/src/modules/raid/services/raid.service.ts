@@ -72,7 +72,7 @@ export class RaidService {
    *
    * @param id raid ID
    */
-  async complete(id: number) {
+  async complete(id: number, userId: number) {
     const raid = await this.raidRepo
       .createQueryBuilder('raid')
       .where('raid.id = :id', { id })
@@ -106,7 +106,7 @@ export class RaidService {
     /**
      * Hard code. Remove it later. Retrieve user ID from request headers
      */
-    const userId = 5;
+
     const userAccount = await this.userAccRepo.findOneBy({
       user: {
         id: userId,

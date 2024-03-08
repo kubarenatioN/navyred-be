@@ -54,6 +54,8 @@ export class Raid {
   })
   status: RaidStatusEnum;
 
-  @ManyToOne(() => Unit, (unit) => unit.raids)
+  @ManyToOne(() => Unit, (unit) => unit.raids, {
+    onDelete: 'CASCADE',
+  })
   unit: Unit;
 }
