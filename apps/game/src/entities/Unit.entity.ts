@@ -1,4 +1,7 @@
 import {
+  AfterInsert,
+  AfterLoad,
+  AfterUpdate,
   Column,
   Entity,
   ManyToOne,
@@ -30,6 +33,8 @@ export class Unit {
   })
   exp: number;
 
+  maxExp: number;
+
   @ManyToOne(() => User, {
     onDelete: 'CASCADE',
   })
@@ -40,6 +45,21 @@ export class Unit {
 
   @OneToMany(() => Raid, (raid) => raid.unit)
   raids: Raid[];
+
+  @AfterLoad()
+  _afterLoad() {
+    this.maxExp = this.upgradeExp;
+  }
+
+  @AfterInsert()
+  _afterInsert() {
+    console.log('Unit.entity After Insert');
+  }
+
+  @AfterUpdate()
+  _afterUpdate() {
+    console.log('Unit.entity After Update');
+  }
 
   get upgradeExp(): number {
     return UnitUpgradeExpCalculator.calc(this.level);
