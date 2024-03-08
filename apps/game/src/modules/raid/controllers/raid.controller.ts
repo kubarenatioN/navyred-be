@@ -27,12 +27,16 @@ export class RaidController {
   }
 
   @Post()
-  create(@Body() body: CreateRaidDTO) {
+  @UseGuards(GetUserGuard)
+  create(@Body() body: CreateRaidDTO, @Req() req: Request) {
     const { unitId } = body;
 
-    return this.raidService.create({
-      unitId,
-    });
+    return this.raidService.create(
+      {
+        unitId,
+      },
+      req.user.id,
+    );
   }
 
   @Post(':id/complete')

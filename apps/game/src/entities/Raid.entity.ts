@@ -47,6 +47,21 @@ export class Raid {
   })
   goldLoot: number;
 
+  /**
+   * Calculated ahead of time gained exp for the raid.
+   * This value should be defined by a function,
+   * which takes input data like unit level, unit type, etc.
+   * and also slightly randomizes the end result.
+   */
+  @Column({
+    name: 'exp',
+    type: 'decimal',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+    select: false,
+  })
+  exp: number;
+
   @Column({
     name: 'status',
     enum: RaidStatusEnum,
