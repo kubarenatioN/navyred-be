@@ -2,8 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Unit, UnitUpgrade, User } from 'apps/game/src/entities';
 import { UnitUpgradeDurationCalculator } from 'apps/game/src/helpers/calculators/units.calculator';
-import { addSeconds } from 'date-fns';
-import { Repository } from 'typeorm';
+import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { In, Repository } from 'typeorm';
 import { CreateUpgradeUnit } from '../models';
 
 @Injectable()
@@ -91,5 +91,55 @@ export class UnitsUpgradeService {
     delete unit.owner;
 
     return unitUpgrade;
+  }
+
+  async fixUnitUpgradesStatus(ids: number[]): Promise<Unit[]> {
+    const currentTime = Date.now();
+
+    const unitsWithUpgrades = await this.unitsRepo.find({
+      relations: {
+        upgrades: true,
+      },
+      where: {
+        id: In(ids),
+        upgrades: {
+          status: 'in_progress',
+        },
+      },
+    });
+
+    const upgradesToSave: UnitUpgrade[] = [];
+    const unitsToSave: Unit[] = [];
+
+    for (const unit of unitsWithUpgrades) {
+      const upgrade = unit.upgrades.length === 1 ? unit.upgrades[0] : null;
+
+      if (upgrade) {
+        const { endAt, status } = upgrade;
+        const shouldBeUpdated =
+          status === 'in_progress' &&
+          differenceInMilliseconds(currentTime, endAt) > 0;
+
+        if (shouldBeUpdated) {
+          upgrade.status = 'completed';
+          if (unit.level < 10) {
+            unit.level += 1;
+            unit.exp = 0;
+          }
+
+          unitsToSave.push(unit);
+          upgradesToSave.push(upgrade);
+        }
+      } else {
+        console.error('Unit has more than one active level upgrade record');
+      }
+    }
+
+    if (upgradesToSave.length > 0) {
+      await this.unitsUpgradeRepo.save(upgradesToSave);
+      await this.unitsRepo.save(unitsToSave);
+    }
+
+    return unitsWithUpgrades;
   }
 }

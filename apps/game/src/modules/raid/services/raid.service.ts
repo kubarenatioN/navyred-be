@@ -11,7 +11,7 @@ import {
   RaidExpCalculator,
   RaidGoldCalculator,
 } from 'apps/game/src/helpers/calculators/units.calculator';
-import { add } from 'date-fns';
+import { add, differenceInMilliseconds } from 'date-fns';
 import { In, Repository } from 'typeorm';
 import { CreateRaid, RaidCompleteResponse } from '../models';
 
@@ -214,15 +214,16 @@ export class RaidService {
   }
 
   async fixRaidsStatus(raids: Raid[]): Promise<Raid[]> {
-    const currentTime = new Date().getTime();
+    const currentTime = Date.now();
 
-    const raidsToSave = [];
+    const raidsToSave: Raid[] = [];
+
     for (const raid of raids) {
       const { endAt, status } = raid;
-      if (
-        status === RaidStatusEnum.InProgress &&
-        currentTime >= endAt.getTime()
-      ) {
+      const isTimePassed =
+        differenceInMilliseconds(currentTime, endAt.getTime()) > 0;
+
+      if (status === RaidStatusEnum.InProgress && isTimePassed) {
         raid.status = RaidStatusEnum.Returned;
         raidsToSave.push(raid);
       }

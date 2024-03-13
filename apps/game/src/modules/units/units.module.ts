@@ -13,5 +13,6 @@ import { UnitsService } from './services/units.service';
   ],
   controllers: [UnitsController],
   providers: [UnitsService, UnitsUpgradeService],
+  exports: [UnitsService, UnitsUpgradeService],
 })
 export class UnitsModule {}

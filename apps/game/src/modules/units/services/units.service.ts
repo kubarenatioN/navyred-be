@@ -10,6 +10,7 @@ import {
 import { In, Repository } from 'typeorm';
 import { RaidService } from '../../raid/services';
 import { CreateUnit } from '../models/units.model';
+import { UnitsUpgradeService } from './units-upgrade.service';
 
 @Injectable()
 export class UnitsService {
@@ -21,6 +22,7 @@ export class UnitsService {
     @InjectRepository(Raid) private raidRepo: Repository<Raid>,
     @InjectRepository(User) private usersRepo: Repository<User>,
     private raidsService: RaidService,
+    private upgradeService: UnitsUpgradeService,
   ) {
     const { RAID_STATUS_CHECK_STRATEGY } = process.env;
     this.isUpdateStatusOnGet = RAID_STATUS_CHECK_STRATEGY === 'onGet';
@@ -43,6 +45,10 @@ export class UnitsService {
         },
       },
     });
+
+    await this.upgradeService.fixUnitUpgradesStatus(
+      userUnits.map((unit) => unit.id),
+    );
 
     /**
      * Fix raids status at the time of request execution
@@ -70,9 +76,9 @@ export class UnitsService {
         'unit.active_upgrade',
         'unit.upgrades',
         'upgrade',
-        'upgrade.status = :status AND upgrade.end_at <= :current_time',
+        'upgrade.status >= :status',
         {
-          status: 'completed',
+          status: 'in_progress',
           current_time: new Date().toISOString(),
         },
       );
