@@ -11,6 +11,7 @@ import {
   Raid,
   Unit,
   UnitModel,
+  UnitUpgrade,
   User,
   UserAccount,
   UserSession,
@@ -31,7 +32,15 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
       useFactory: (configService: ConfigService) => {
         return {
           ...mainCon(configService),
-          entities: [UnitModel, Raid, User, UserAccount, UserSession, Unit],
+          entities: [
+            UnitModel,
+            Raid,
+            User,
+            UserAccount,
+            UserSession,
+            Unit,
+            UnitUpgrade,
+          ],
         };
       },
       imports: [ConfigModule],

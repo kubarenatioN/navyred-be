@@ -65,7 +65,17 @@ export class UnitsService {
           returned: RaidStatusEnum.Returned,
         },
       )
-      .leftJoinAndSelect('unit.model', 'model');
+      .leftJoinAndSelect('unit.model', 'model')
+      .leftJoinAndMapOne(
+        'unit.active_upgrade',
+        'unit.upgrades',
+        'upgrade',
+        'upgrade.status = :status AND upgrade.end_at <= :current_time',
+        {
+          status: 'completed',
+          current_time: new Date().toISOString(),
+        },
+      );
 
     const result = await qb.getMany();
 

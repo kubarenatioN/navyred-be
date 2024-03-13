@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   ParseIntPipe,
   Post,
   Req,
@@ -10,6 +11,7 @@ import {
 import { CreateUnitDTO } from 'apps/game/src/dto';
 import { GetUserGuard, ProtectedGuard } from 'apps/game/src/guards';
 import { Request } from 'express';
+import { UnitsUpgradeService } from '../services';
 import { UnitsService } from '../services/units.service';
 
 @UseGuards(ProtectedGuard)
@@ -18,7 +20,10 @@ import { UnitsService } from '../services/units.service';
   version: '1',
 })
 export class UnitsController {
-  constructor(private unitsService: UnitsService) {}
+  constructor(
+    private unitsService: UnitsService,
+    private unitUpgradeService: UnitsUpgradeService,
+  ) {}
 
   @UseGuards(GetUserGuard)
   @Get()
@@ -29,7 +34,7 @@ export class UnitsController {
   @UseGuards(GetUserGuard)
   @Post('claim')
   /**
-   * Claims unit instance for user
+   * Claims unit instance for provided user
    */
   async claim(
     @Req() req: Request,
@@ -47,6 +52,23 @@ export class UnitsController {
   async create(@Body() body: CreateUnitDTO) {
     const created = await this.unitsService.create(body);
     return created;
+  }
+
+  @UseGuards(GetUserGuard)
+  @Post(':id/upgrade')
+  /**
+   * Upgrades the unit level
+   */
+  async upgradeUnit(
+    @Req() req: Request,
+    @Param('id', ParseIntPipe) unitId: number,
+  ) {
+    const upgrade = await this.unitUpgradeService.upgrade({
+      unitId,
+      ownerId: req.user.id,
+    });
+
+    return upgrade;
   }
 
   // @Get('raids')

@@ -13,6 +13,7 @@ import { ColumnNumericTransformer } from '../helpers/transformers';
 import { Raid } from './Raid.entity';
 import { UnitModel } from './UnitModel.entity';
 import { User } from './User.entity';
+import { UnitUpgrade } from './UnitUpgrades.entity';
 
 @Entity({
   name: 'user_units',
@@ -45,6 +46,9 @@ export class Unit {
 
   @OneToMany(() => Raid, (raid) => raid.unit)
   raids: Raid[];
+
+  @OneToMany(() => UnitUpgrade, (upgrade) => upgrade.unit)
+  upgrades: UnitUpgrade[];
 
   @AfterLoad()
   _afterLoad() {
