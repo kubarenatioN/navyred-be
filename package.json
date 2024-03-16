@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
-    "start": "npm run start:game:prod",
+    "start": "node dist/apps/game/main.js",
     "start:dev": "nest start --watch",
     "start:game:dev": "nest start game --watch",
     "start:web3:dev": "nest start web3 --watch",
