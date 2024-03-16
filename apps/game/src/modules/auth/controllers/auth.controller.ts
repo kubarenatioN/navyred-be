@@ -26,10 +26,10 @@ export class AuthController {
   ) {}
 
   @Get('self')
-  async getSession(@Req() req: Request) {
+  async getUserBySession(@Req() req: Request) {
     const session = req.cookies[this.sessionToken];
 
-    return this.authService.getSession(session);
+    return this.authService.getUserBySession(session);
   }
 
   @HttpCode(HttpStatus.OK)

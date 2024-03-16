@@ -10,6 +10,7 @@ import {
 import { In, Repository } from 'typeorm';
 import { RaidService } from '../../raid/services';
 import { CreateUnit } from '../models/units.model';
+import { UnitsUpgradeService } from './units-upgrade.service';
 
 @Injectable()
 export class UnitsService {
@@ -21,9 +22,63 @@ export class UnitsService {
     @InjectRepository(Raid) private raidRepo: Repository<Raid>,
     @InjectRepository(User) private usersRepo: Repository<User>,
     private raidsService: RaidService,
+    private upgradeService: UnitsUpgradeService,
   ) {
     const { RAID_STATUS_CHECK_STRATEGY } = process.env;
     this.isUpdateStatusOnGet = RAID_STATUS_CHECK_STRATEGY === 'onGet';
+  }
+
+  async get(unitId: number, ownerId: number) {
+    const unit = await this.unitsRepo.findOne({
+      relations: {
+        model: true,
+        raids: true,
+      },
+      where: {
+        id: unitId,
+        owner: {
+          id: ownerId,
+        },
+      },
+    });
+
+    if (!unit) {
+      throw new HttpException('No unit found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.upgradeService.fixUnitUpgradesStatus([unit.id]);
+    await this.raidsService.fixRaidsStatus(unit.raids);
+
+    const queryBuilder = this.unitsRepo.createQueryBuilder('unit');
+
+    const qb = queryBuilder
+      .andWhere('unit.owner = :owner', { owner: ownerId })
+      .andWhere('unit.id = :unit_id', { unit_id: unit.id })
+      .leftJoinAndMapOne(
+        'unit.active_raid',
+        'unit.raids',
+        'raid',
+        'raid.status = :in_progress OR raid.status = :returned',
+        {
+          in_progress: RaidStatusEnum.InProgress,
+          returned: RaidStatusEnum.Returned,
+        },
+      )
+      .leftJoinAndSelect('unit.model', 'model')
+      .leftJoinAndMapOne(
+        'unit.active_upgrade',
+        'unit.upgrades',
+        'upgrade',
+        'upgrade.status >= :status',
+        {
+          status: 'in_progress',
+          current_time: new Date().toISOString(),
+        },
+      );
+
+    const result = await qb.getOne();
+
+    return result;
   }
 
   // TODO: add dynamic raid status param
@@ -35,7 +90,6 @@ export class UnitsService {
       relations: {
         owner: true,
         raids: true,
-        model: true,
       },
       where: {
         owner: {
@@ -43,6 +97,10 @@ export class UnitsService {
         },
       },
     });
+
+    await this.upgradeService.fixUnitUpgradesStatus(
+      userUnits.map((unit) => unit.id),
+    );
 
     /**
      * Fix raids status at the time of request execution
@@ -65,7 +123,18 @@ export class UnitsService {
           returned: RaidStatusEnum.Returned,
         },
       )
-      .leftJoinAndSelect('unit.model', 'model');
+      .leftJoinAndSelect('unit.model', 'model')
+      .leftJoinAndMapOne(
+        'unit.active_upgrade',
+        'unit.upgrades',
+        'upgrade',
+        'upgrade.status >= :status',
+        {
+          status: 'in_progress',
+          current_time: new Date().toISOString(),
+        },
+      )
+      .orderBy('unit.created_at', 'ASC');
 
     const result = await qb.getMany();
 
@@ -91,6 +160,8 @@ export class UnitsService {
       owner,
       model,
     });
+
+    delete inserted.owner;
 
     return inserted;
   }

@@ -9,18 +9,20 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 export function mainCon(configService: ConfigService): TypeOrmModuleOptions {
   const PG_HOST = configService.get('PG_HOST');
   const PG_DB = configService.get('PG_DB');
+  const PG_PORT = configService.get('PG_PORT');
   const PG_USERNAME = configService.get('PG_USERNAME');
   const PG_PASSWORD = configService.get('PG_PASSWORD');
+  const PG_IS_SSL = configService.get('PG_IS_SSL');
 
   return {
     type: 'postgres',
     host: PG_HOST,
-    port: 5432,
+    port: PG_PORT,
     database: PG_DB,
     username: PG_USERNAME,
     password: PG_PASSWORD,
     synchronize: true,
-    ssl: true,
+    ssl: JSON.parse(PG_IS_SSL),
   };
 }
 
