@@ -44,6 +44,7 @@ export class RaidService {
     const unit = await this.unitRepo.findOne({
       relations: {
         owner: true,
+        model: true,
       },
       where: {
         id: unitId,
@@ -81,8 +82,10 @@ export class RaidService {
     }
 
     const now = new Date();
+    const seconds = RaidDurationCalculator.calc(unit.level);
+    // const seconds = 5;
     const endAt = add(now, {
-      seconds: RaidDurationCalculator.calc(unit.level),
+      seconds,
     });
     const expGained = RaidExpCalculator.calc(unit.level);
     const goldLoot = RaidGoldCalculator.calc(unit.level);
@@ -99,8 +102,11 @@ export class RaidService {
 
     delete inserted.goldLoot;
     delete inserted.exp;
+    delete inserted.unit;
 
-    return inserted;
+    unit['active_raid'] = inserted;
+
+    return unit;
   }
 
   /**
@@ -114,6 +120,7 @@ export class RaidService {
       .where('raid.id = :id', { id })
       .leftJoinAndSelect('raid.unit', 'unit')
       .leftJoinAndSelect('unit.owner', 'owner')
+      .leftJoinAndSelect('unit.model', 'model')
       .addSelect('raid.goldLoot')
       .addSelect('raid.exp')
       .getOne();

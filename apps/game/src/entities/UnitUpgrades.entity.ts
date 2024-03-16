@@ -21,6 +21,12 @@ export class UnitUpgrade {
   unit: Unit;
 
   @Column({
+    name: 'start_at',
+    type: 'timestamptz',
+  })
+  startAt: Date;
+
+  @Column({
     name: 'end_at',
     type: 'timestamptz',
   })

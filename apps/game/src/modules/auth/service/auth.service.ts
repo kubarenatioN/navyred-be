@@ -55,7 +55,7 @@ export class AuthService {
     const session = await this.sessionRepo.save({
       userId: user.id,
       uid: genUid(),
-      expiredAt: add(new Date(), { minutes: 15 }),
+      expiredAt: add(new Date(), { minutes: 30 }),
     });
 
     return {
@@ -97,7 +97,7 @@ export class AuthService {
       userId: user.id,
       uid: genUid(),
       expiredAt: add(Date.now(), {
-        minutes: 15,
+        minutes: 30,
       }),
     };
 

@@ -26,6 +26,12 @@ export class UnitsController {
   ) {}
 
   @UseGuards(GetUserGuard)
+  @Get(':id')
+  async get(@Param('id', ParseIntPipe) unitId: number, @Req() req: Request) {
+    return this.unitsService.get(unitId, req.user.id);
+  }
+
+  @UseGuards(GetUserGuard)
   @Get()
   async getAll(@Req() req: Request) {
     return this.unitsService.getAll(req.user.id);
@@ -70,18 +76,4 @@ export class UnitsController {
 
     return upgrade;
   }
-
-  // @Get('raids')
-  // getUnitsRaids(
-  //   @Query(
-  //     'unit_ids',
-  //     new ParseArrayPipe({
-  //       items: Number,
-  //       optional: true,
-  //     }),
-  //   )
-  //   unitsIds?: number[],
-  // ) {
-  //   return this.unitsService.getUnitsRaids(unitsIds);
-  // }
 }

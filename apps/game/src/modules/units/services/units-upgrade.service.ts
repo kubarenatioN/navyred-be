@@ -19,6 +19,7 @@ export class UnitsUpgradeService {
     const unit = await this.unitsRepo.findOne({
       relations: {
         owner: true,
+        model: true,
       },
       where: {
         id: unitId,
@@ -75,20 +76,21 @@ export class UnitsUpgradeService {
       );
     }
 
-    const endAt = addSeconds(
-      Date.now(),
-      UnitUpgradeDurationCalculator.calc(unit.level),
-    );
+    const startAt = new Date();
+    // const seconds = 10;
+    const seconds = UnitUpgradeDurationCalculator.calc(unit.level);
+    const endAt = addSeconds(Date.now(), seconds);
 
     const payload: CreateUpgradeUnit = {
       unit,
+      startAt,
       endAt,
       status: 'in_progress',
     };
 
     const unitUpgrade = await this.unitsUpgradeRepo.save(payload);
 
-    delete unit.owner;
+    delete unitUpgrade.unit;
 
     return unitUpgrade;
   }

@@ -12,8 +12,8 @@ import { UnitUpgradeExpCalculator } from '../helpers/calculators/units.calculato
 import { ColumnNumericTransformer } from '../helpers/transformers';
 import { Raid } from './Raid.entity';
 import { UnitModel } from './UnitModel.entity';
-import { User } from './User.entity';
 import { UnitUpgrade } from './UnitUpgrades.entity';
+import { User } from './User.entity';
 
 @Entity({
   name: 'user_units',
@@ -33,6 +33,13 @@ export class Unit {
     transformer: new ColumnNumericTransformer(),
   })
   exp: number;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamptz',
+    default: new Date(),
+  })
+  createdAt: Date;
 
   maxExp: number;
 
@@ -66,6 +73,7 @@ export class Unit {
   }
 
   get upgradeExp(): number {
+    // return 2;
     return UnitUpgradeExpCalculator.calc(this.level);
   }
 }

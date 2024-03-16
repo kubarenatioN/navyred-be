@@ -28,6 +28,59 @@ export class UnitsService {
     this.isUpdateStatusOnGet = RAID_STATUS_CHECK_STRATEGY === 'onGet';
   }
 
+  async get(unitId: number, ownerId: number) {
+    const unit = await this.unitsRepo.findOne({
+      relations: {
+        model: true,
+        raids: true,
+      },
+      where: {
+        id: unitId,
+        owner: {
+          id: ownerId,
+        },
+      },
+    });
+
+    if (!unit) {
+      throw new HttpException('No unit found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.upgradeService.fixUnitUpgradesStatus([unit.id]);
+    await this.raidsService.fixRaidsStatus(unit.raids);
+
+    const queryBuilder = this.unitsRepo.createQueryBuilder('unit');
+
+    const qb = queryBuilder
+      .andWhere('unit.owner = :owner', { owner: ownerId })
+      .andWhere('unit.id = :unit_id', { unit_id: unit.id })
+      .leftJoinAndMapOne(
+        'unit.active_raid',
+        'unit.raids',
+        'raid',
+        'raid.status = :in_progress OR raid.status = :returned',
+        {
+          in_progress: RaidStatusEnum.InProgress,
+          returned: RaidStatusEnum.Returned,
+        },
+      )
+      .leftJoinAndSelect('unit.model', 'model')
+      .leftJoinAndMapOne(
+        'unit.active_upgrade',
+        'unit.upgrades',
+        'upgrade',
+        'upgrade.status >= :status',
+        {
+          status: 'in_progress',
+          current_time: new Date().toISOString(),
+        },
+      );
+
+    const result = await qb.getOne();
+
+    return result;
+  }
+
   // TODO: add dynamic raid status param
   /**
    * Gets user units with raids
@@ -37,7 +90,6 @@ export class UnitsService {
       relations: {
         owner: true,
         raids: true,
-        model: true,
       },
       where: {
         owner: {
@@ -81,7 +133,8 @@ export class UnitsService {
           status: 'in_progress',
           current_time: new Date().toISOString(),
         },
-      );
+      )
+      .orderBy('unit.created_at', 'ASC');
 
     const result = await qb.getMany();
 
@@ -107,6 +160,8 @@ export class UnitsService {
       owner,
       model,
     });
+
+    delete inserted.owner;
 
     return inserted;
   }

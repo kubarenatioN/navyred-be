@@ -13,5 +13,6 @@ export interface ReadUnit {
 export interface CreateUpgradeUnit {
   unit: Unit;
   status: UpgradeUnitStatusType;
+  startAt: Date;
   endAt: Date;
 }
