@@ -17,7 +17,9 @@ export class ProtectedGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();
-    const session = req.cookies[this.sessionToken];
+    // const session = req.cookies[this.sessionToken];
+
+    const session = req.headers.authorization;
 
     if (!session) {
       throw new UnauthorizedException();

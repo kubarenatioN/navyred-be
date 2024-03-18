@@ -15,6 +15,7 @@
     "start:debug": "nest start --debug --watch",
     "start:game:prod": "node dist/apps/game/main.js",
     "start:web3:prod": "node dist/apps/web3/main.js",
+    "dev": "npm run start:game:dev",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
