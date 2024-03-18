@@ -29,7 +29,7 @@ export class AuthService {
    */
   async getUserBySession(uid: string): Promise<UserRead> {
     if (!uid) {
-      throw new HttpException('No session id provided', HttpStatus.BAD_REQUEST);
+      throw new HttpException('No session id provided', HttpStatus.NOT_FOUND);
     }
 
     const session = await this.userService.getUserSession(uid);
