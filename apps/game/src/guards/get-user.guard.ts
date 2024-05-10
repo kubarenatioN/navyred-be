@@ -1,6 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -21,13 +23,18 @@ export class GetUserGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();
     // const session = req.cookies[this.sessionToken];
-    const session = req.headers.authorization;
+    const sessionToken = req.headers.authorization;
 
-    if (!session) {
+    if (!sessionToken) {
       throw new UnauthorizedException();
     }
 
-    const user = await this.authService.getUserBySession(session);
+    const user = await this.authService.getUserBySession(sessionToken);
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     req.user = user;
 
     return true;

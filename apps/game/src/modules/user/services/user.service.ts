@@ -40,16 +40,6 @@ export class UserService {
     return result;
   }
 
-  async getUserSession(uid: string): Promise<UserSession> {
-    const session = await this.sessionRepo.findOneBy({ uid });
-
-    if (!session) {
-      throw new HttpException('Session not found', HttpStatus.NOT_FOUND);
-    }
-
-    return session;
-  }
-
   async getUserSilently(query: UserReadQuery) {
     let user: UserRead | null = null;
 

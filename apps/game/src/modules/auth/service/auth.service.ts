@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserSession } from 'apps/game/src/entities';
 import { genUid } from 'apps/game/src/helpers/uid';
-import { add } from 'date-fns';
+import { add, differenceInMilliseconds } from 'date-fns';
 import { Repository } from 'typeorm';
 import { UnitsService } from '../../units/services';
 import { UserRead } from '../../user/models';
@@ -32,9 +32,21 @@ export class AuthService {
       throw new HttpException('No session id provided', HttpStatus.NOT_FOUND);
     }
 
-    const session = await this.userService.getUserSession(uid);
+    const session = await this.getUserSession(uid);
+
+    const now = new Date();
+    const isExpired = differenceInMilliseconds(session.expiredAt, now) < 0;
+    if (isExpired) {
+      throw new HttpException('Session expired', HttpStatus.UNAUTHORIZED);
+    }
 
     return this.userService.getUser({ id: session.userId });
+  }
+
+  async getUserSession(uid: string): Promise<UserSession | null> {
+    const session = await this.sessionRepo.findOneBy({ uid });
+
+    return session;
   }
 
   async login(data: UserLogin) {

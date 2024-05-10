@@ -19,9 +19,9 @@ export class ProtectedGuard implements CanActivate {
     const req: Request = context.switchToHttp().getRequest();
     // const session = req.cookies[this.sessionToken];
 
-    const session = req.headers.authorization;
+    const sessionToken = req.headers.authorization;
 
-    if (!session) {
+    if (!sessionToken) {
       throw new UnauthorizedException();
     }
 
