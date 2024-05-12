@@ -1,14 +1,11 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ColumnNumericTransformer } from '../helpers/transformers';
 import { User } from './User.entity';
 
 @Entity('user_accounts')
+/**
+ * Game account of the user.
+ */
 export class UserAccount {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,9 +18,8 @@ export class UserAccount {
   })
   goldBalance: number;
 
-  @OneToOne(() => User, {
+  @OneToOne(() => User, (user) => user.gameAccount, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
   user: User;
 }

@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { mainCon } from './db/providers';
 import {
   Raid,
+  RefreshToken,
   Unit,
   UnitModel,
   UnitUpgrade,
@@ -40,6 +41,7 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
             UserSession,
             Unit,
             UnitUpgrade,
+            RefreshToken,
           ],
         };
       },
@@ -54,7 +56,7 @@ const gameStaticAssetsPath = join(__dirname, '../../assets');
       },
     }),
     ConfigModule.forRoot({
-      envFilePath: ['.env.game'],
+      envFilePath: ['.env.game', '.env.web3'],
     }),
     ScheduleModule.forRoot(),
     SharedModule,

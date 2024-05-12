@@ -1,47 +1,36 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User, UserAccount, UserSession } from 'apps/game/src/entities';
+import { User, UserAccount } from 'apps/game/src/entities';
 import { Repository } from 'typeorm';
 import { UserRead, UserReadQuery } from '../models';
+import { UserDataService } from './user-data.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(UserSession) private sessionRepo: Repository<UserSession>,
     @InjectRepository(UserAccount) private userAccRepo: Repository<UserAccount>,
+    private dataService: UserDataService,
   ) {}
 
-  async getUser(query: UserReadQuery): Promise<UserRead> {
-    const acc = await this.userAccRepo.findOne({
-      relations: {
-        user: true,
-      },
-      where: {
-        user: query,
-      },
-    });
+  async getUser(query: UserReadQuery): Promise<User> {
+    const user = await this.dataService.getUser(query);
 
-    if (!acc || !acc.user) {
+    if (!user || !user.gameAccount) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    const { user, goldBalance } = acc;
-
     delete user.password;
 
-    const result: UserRead = {
-      ...user,
-      account: {
-        goldBalance,
-      },
-    };
-
-    return result;
+    return user;
   }
 
-  async getUserSilently(query: UserReadQuery) {
-    let user: UserRead | null = null;
+  async getUserRaw(query: UserReadQuery): Promise<User> {
+    return await this.dataService.getUser(query);
+  }
+
+  async getUserSilently(query: UserReadQuery): Promise<User | null> {
+    let user: User | null = null;
 
     try {
       user = await this.getUser(query);
@@ -55,28 +44,56 @@ export class UserService {
   /**
    * Creates new user via login and password
    */
-  async create({
-    login,
-    password,
-  }: {
-    login: string;
-    password: string;
+  async create(data: {
+    login?: string;
+    password?: string;
+    address?: string;
   }): Promise<UserRead> {
+    const { login, password, address } = data;
+
+    let newUser: User | undefined = undefined;
+
     // TODO: add password hash
-    const newUser = await this.userRepo.save({ login, password });
+    if (login && password) {
+      newUser = await this.saveUserWithPassword(login, password);
+    } else if (address) {
+      newUser = await this.saveUserWithWalletAddress(address, 'metamask');
+    }
+
+    if (!newUser) {
+      throw new HttpException(
+        'Unable to create new user. Not enough data provided.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const newAccount = await this.userAccRepo.save({
       user: newUser,
-      goldBalance: 0,
+      goldBalance: 10,
     });
 
     delete newUser.password;
 
     return {
       ...newUser,
-      account: {
+      gameAccount: {
         goldBalance: newAccount.goldBalance,
       },
     };
+  }
+
+  private async saveUserWithPassword(
+    login: string,
+    password: string,
+  ): Promise<User> {
+    return this.userRepo.save({ login, password });
+  }
+
+  private async saveUserWithWalletAddress(
+    address: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    type: 'metamask',
+  ): Promise<User> {
+    return this.userRepo.save({ walletAddress: address });
   }
 }

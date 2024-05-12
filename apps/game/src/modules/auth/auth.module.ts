@@ -1,23 +1,41 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SESSION_KEY } from '../../constants';
-import { Raid, Unit, User, UserAccount, UserSession } from '../../entities';
+import {
+  Raid,
+  RefreshToken,
+  Unit,
+  User,
+  UserAccount,
+  UserSession,
+} from '../../entities';
 import { RaidService } from '../raid/services';
-import { UserService } from '../user/services';
 import { UserModule } from '../user/user.module';
-import { AuthController } from './controllers';
-import { AuthService } from './service';
+import {
+  AuthController,
+  TokenController,
+  Web3AuthController,
+} from './controllers';
+import { AuthService, TokenService, Web3AuthService } from './service';
 import { TaskService } from './service/task.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserSession, Unit, UserAccount, Raid]),
+    TypeOrmModule.forFeature([
+      User,
+      UserSession,
+      Unit,
+      UserAccount,
+      Raid,
+      RefreshToken,
+    ]),
     UserModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, Web3AuthController, TokenController],
   providers: [
     AuthService,
-    UserService,
+    Web3AuthService,
+    TokenService,
     RaidService,
     TaskService,
     {
@@ -27,6 +45,6 @@ import { TaskService } from './service/task.service';
       },
     },
   ],
-  exports: [AuthService, SESSION_KEY],
+  exports: [AuthService, TokenService, SESSION_KEY],
 })
 export class AuthModule {}
