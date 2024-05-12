@@ -1,13 +1,33 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { UserAccount } from './UserAccount.entity';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   login: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   password: string;
+
+  @Column({
+    nullable: true,
+  })
+  walletAddress: string;
+
+  @OneToOne(() => UserAccount, (acc) => acc.user)
+  @JoinColumn()
+  gameAccount: UserAccount;
 }
