@@ -7,11 +7,14 @@ import {
   Inject,
   Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SESSION_KEY } from 'apps/game/src/constants';
 import { LoginUserDTO, RegisterUserDTO } from 'apps/game/src/dto';
 import { minutesToMilliseconds } from 'date-fns';
 import { Request, Response } from 'express';
+import { decode } from 'jsonwebtoken';
+import { AccessTokenPayload } from '../models';
 import { AuthService } from '../service';
 
 @Controller({
@@ -53,12 +56,26 @@ export class AuthController {
       password,
     });
 
-    // this.setSessionInCookie(res, session);
-
     return {
       user,
       session,
     };
+  }
+
+  @Get('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Req() req: Request) {
+    const { authorization } = req.headers;
+
+    if (!authorization) {
+      throw new UnauthorizedException();
+    }
+
+    const { userId } = decode(
+      authorization.split(' ')[1],
+    ) as AccessTokenPayload;
+
+    await this.authService.logout(userId);
   }
 
   private setSessionInHeader(res: Response, session: string) {

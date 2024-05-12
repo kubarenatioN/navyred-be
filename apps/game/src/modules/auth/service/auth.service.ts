@@ -12,12 +12,14 @@ import {
   UserRegister,
   UserSessionModel,
 } from '../models/auth.models';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(UserSession) private sessionRepo: Repository<UserSession>,
+    private tokenService: TokenService,
     private unitsService: UnitsService,
     private userService: UserService,
   ) {}
@@ -121,17 +123,7 @@ export class AuthService {
     };
   }
 
-  // TODO: Move this method to UserService
-  /**
-   * Query user from database
-   *
-   * @param login user login
-   * @param password user password
-   */
-  getUser(login: string, password: string): Promise<UserRead | null> {
-    return this.userService.getUserSilently({
-      login,
-      password,
-    });
+  async logout(userId: number) {
+    await this.tokenService.deleteUserTokens(userId);
   }
 }
