@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserSession } from 'apps/game/src/entities';
+import { catchTokenError, verifyAccess } from 'apps/game/src/helpers/auth';
 import { genUid } from 'apps/game/src/helpers/uid';
 import { add, differenceInMilliseconds } from 'date-fns';
 import { Repository } from 'typeorm';
@@ -43,6 +44,16 @@ export class AuthService {
     }
 
     return this.userService.getUser({ id: session.userId });
+  }
+
+  async getUserByToken(token: string) {
+    let userId: number;
+    await catchTokenError(() => {
+      const { userId: _id } = verifyAccess(token);
+      userId = _id;
+    });
+
+    return this.userService.getUser({ id: userId });
   }
 
   async getUserSession(uid: string): Promise<UserSession | null> {

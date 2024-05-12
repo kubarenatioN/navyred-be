@@ -29,9 +29,15 @@ export class AuthController {
 
   @Get('self')
   async getUserBySession(@Req() req: Request) {
-    const session = req.headers.authorization;
+    const { authorization } = req.headers;
 
-    return this.authService.getUserBySession(session);
+    if (!authorization) {
+      throw new UnauthorizedException();
+    }
+
+    const token = authorization.split(' ')[1];
+
+    return this.authService.getUserByToken(token);
   }
 
   @HttpCode(HttpStatus.OK)
