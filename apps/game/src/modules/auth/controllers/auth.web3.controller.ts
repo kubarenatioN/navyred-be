@@ -1,7 +1,15 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { rand } from 'apps/game/src/helpers/crypto';
+import { web3 } from 'apps/game/src/helpers/web3';
 import { Request } from 'express';
-import { sign } from 'jsonwebtoken';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { Web3AuthService } from '../service';
 
 @Controller({
@@ -40,36 +48,36 @@ export class Web3AuthController {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Req() req: Request,
   ) {
-    // const { authorization } = req.headers;
-    // if (!authorization) {
-    //   throw new HttpException('No auth header', HttpStatus.FORBIDDEN);
-    // }
+    const { authorization } = req.headers;
+    if (!authorization) {
+      throw new HttpException('No auth header', HttpStatus.FORBIDDEN);
+    }
 
-    // let address = '';
-    // let nonce = '';
-    // try {
-    //   const data = verify(
-    //     authorization,
-    //     process.env.ACCESS_TOKEN_SECRET,
-    //   ) as JwtPayload;
+    let address = '';
+    let nonce = '';
+    try {
+      const data = verify(
+        authorization,
+        process.env.ACCESS_TOKEN_SECRET,
+      ) as JwtPayload;
 
-    //   address = data.address;
-    //   nonce = data.nonce;
-    // } catch (error) {
-    //   throw new HttpException('Auth token expired', HttpStatus.UNAUTHORIZED);
-    // }
+      address = data.address;
+      nonce = data.nonce;
+    } catch (error) {
+      throw new HttpException('Auth token expired', HttpStatus.UNAUTHORIZED);
+    }
 
-    // const message = this.getSignMessage(nonce);
+    const message = this.getSignMessage(nonce);
 
-    // const verifiedAddress = web3.eth.accounts.recover(message, signature);
+    const verifiedAddress = web3.eth.accounts.recover(message, signature);
 
-    // const isEqual = verifiedAddress.toLowerCase() === address.toLowerCase();
+    const isEqual = verifiedAddress.toLowerCase() === address.toLowerCase();
 
-    // if (!isEqual) {
-    //   throw new HttpException('Bad signature', HttpStatus.BAD_REQUEST);
-    // }
+    if (!isEqual) {
+      throw new HttpException('Bad signature', HttpStatus.BAD_REQUEST);
+    }
 
-    const address = '0xeca102a0E8755cAC155cE219B7051db53D012dF2';
+    // const address = '0xeca102a0E8755cAC155cE219B7051db53D012dF2';
 
     const { accessToken } = await this.authService.login(address);
 

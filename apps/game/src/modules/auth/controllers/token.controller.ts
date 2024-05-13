@@ -1,9 +1,9 @@
 import {
-  Body,
   Controller,
+  Get,
+  Headers,
   HttpException,
   HttpStatus,
-  Post,
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -21,7 +21,6 @@ import {
 import { add } from 'date-fns';
 import { decode } from 'jsonwebtoken';
 import { Repository } from 'typeorm';
-import { UserService } from '../../user/services';
 import { AccessTokenPayload } from '../models';
 import { TokenService } from '../service';
 
@@ -31,21 +30,19 @@ import { TokenService } from '../service';
 })
 export class TokenController {
   constructor(
-    private userService: UserService,
     @InjectRepository(RefreshToken)
     private refreshRepo: Repository<RefreshToken>,
     private tokenService: TokenService,
   ) {}
 
-  @Post('refresh')
-  async refresh(@Body('accessToken') accessToken: string) {
+  @Get('refresh')
+  async refresh(@Headers('authorization') auth: string) {
+    const accessToken = auth.split(' ')[1];
     const {
       userId,
       address,
       refreshId: oldRefreshId,
     } = decode(accessToken) as AccessTokenPayload;
-
-    // const user = await this.userService.getUserRaw({ id: userId });
 
     const userTokens = await this.refreshRepo.find({
       where: {
@@ -56,7 +53,7 @@ export class TokenController {
     });
 
     if (userTokens.length === 0) {
-      return new HttpException(
+      throw new HttpException(
         'Try to log in first',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
